@@ -2,14 +2,17 @@
 
 一个基于 Model Context Protocol (MCP) 的飞书集成插件，允许 AI 助手通过 MCP 协议与飞书服务进行交互。
 
+[![GitHub stars](https://img.shields.io/github/stars/Venice851007/feishu-mcp-plugin.svg)](https://github.com/Venice851007/feishu-mcp-plugin)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+
 ## 项目简介
 
 本项目是一个 MCP 服务器插件，提供了与飞书（Feishu）服务集成的能力。通过该插件，AI 助手可以：
 
-- 创建和管理飞书文档
-- 发送飞书消息
-- 管理飞书日历事件
-- 搜索飞书文档
+- ✅ 创建和管理飞书文档
+- ✅ 发送飞书消息到群聊
+- ✅ 管理飞书日历事件
+- ✅ 搜索飞书文档
 
 ## 系统架构
 
@@ -34,24 +37,16 @@
 | 日历管理 | 创建日历事件 | ✅ 已实现 |
 | 文档搜索 | 搜索飞书文档 | ✅ 已实现 |
 
-## 安装部署
+## 快速开始
 
-### 前置要求
-
-- Docker
-- Node.js 20+ (本地开发)
-- 飞书应用凭证
-
-### 快速开始
-
-#### 1. 获取飞书应用凭证
+### 1. 获取飞书应用凭证
 
 1. 访问 [飞书开放平台](https://open.feishu.cn/)
 2. 创建企业自建应用
 3. 获取 `App ID` 和 `App Secret`
 4. 申请相关权限（文档、消息、日历等）
 
-#### 2. 配置环境变量
+### 2. 配置环境变量
 
 创建 `.env` 文件：
 
@@ -61,7 +56,7 @@ FEISHU_APP_SECRET=your_app_secret
 API_KEY=your_api_key  # 用于认证的 API 密钥
 ```
 
-#### 3. 本地运行
+### 3. 本地运行
 
 ```bash
 # 安装依赖
@@ -74,7 +69,7 @@ npm run build
 npm start
 ```
 
-#### 4. Docker 部署
+### 4. Docker 部署
 
 ```bash
 # 构建镜像
@@ -89,11 +84,41 @@ docker run -d \
   feishu-mcp-plugin
 ```
 
-## 使用方法
+## OpenCode 集成
 
-### API 端点
+### 配置 OpenCode MCP 服务器
 
-#### 1. MCP 端点 (`/mcp`)
+编辑 `~/.config/opencode/config.json`：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "feishu-mcp": {
+      "type": "local",
+      "command": ["node", "/path/to/feishu-mcp-plugin/dist/index-http.js"],
+      "enabled": true,
+      "environment": {
+        "FEISHU_APP_ID": "your_app_id",
+        "FEISHU_APP_SECRET": "your_app_secret",
+        "API_KEY": "your_api_key"
+      }
+    }
+  }
+}
+```
+
+### 使用示例
+
+在 OpenCode 中直接使用：
+
+```
+帮我创建一个飞书文档，标题是"项目计划"
+```
+
+## API 端点
+
+### 1. MCP 端点 (`/mcp`)
 
 MCP 协议通信端点，支持 JSON-RPC 请求。
 
@@ -118,28 +143,17 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-#### 2. 健康检查端点 (`/health`)
+### 2. 健康检查端点 (`/health`)
 
 检查服务器状态。
-
-**请求示例：**
 
 ```bash
 curl -H "X-API-Key: your_api_key" http://localhost:8080/health
 ```
 
-**响应示例：**
+## 可用工具
 
-```json
-{
-  "status": "ok",
-  "service": "feishu-mcp-plugin"
-}
-```
-
-### 可用工具
-
-#### 1. 创建文档 (`create_document`)
+### 1. 创建文档 (`create_document`)
 
 创建新的飞书文档。
 
@@ -148,18 +162,7 @@ curl -H "X-API-Key: your_api_key" http://localhost:8080/health
 - `content` (可选): 初始内容
 - `folderToken` (可选): 父文件夹令牌
 
-**示例：**
-```json
-{
-  "name": "create_document",
-  "arguments": {
-    "title": "我的文档",
-    "content": "这是文档内容"
-  }
-}
-```
-
-#### 2. 发送消息 (`send_message`)
+### 2. 发送消息 (`send_message`)
 
 发送消息到飞书群聊。
 
@@ -168,18 +171,7 @@ curl -H "X-API-Key: your_api_key" http://localhost:8080/health
 - `content` (必需): 消息内容
 - `msg_type` (可选): 消息类型，默认为 "text"
 
-**示例：**
-```json
-{
-  "name": "send_message",
-  "arguments": {
-    "chat_id": "oc_xxxxxxxxxxxx",
-    "content": "你好，这是一条测试消息"
-  }
-}
-```
-
-#### 3. 创建日历事件 (`create_calendar_event`)
+### 3. 创建日历事件 (`create_calendar_event`)
 
 创建飞书日历事件。
 
@@ -190,37 +182,13 @@ curl -H "X-API-Key: your_api_key" http://localhost:8080/health
 - `description` (可选): 事件描述
 - `calendar_id` (可选): 日历 ID，默认为 "primary"
 
-**示例：**
-```json
-{
-  "name": "create_calendar_event",
-  "arguments": {
-    "summary": "团队会议",
-    "start_time": "2024-01-01T10:00:00+08:00",
-    "end_time": "2024-01-01T11:00:00+08:00",
-    "description": "每周团队例会"
-  }
-}
-```
-
-#### 4. 搜索文档 (`search_documents`)
+### 4. 搜索文档 (`search_documents`)
 
 搜索飞书文档。
 
 **参数：**
 - `query` (必需): 搜索关键词
 - `search_scope` (可选): 搜索范围：doc, sheet, all，默认为 "all"
-
-**示例：**
-```json
-{
-  "name": "search_documents",
-  "arguments": {
-    "query": "项目文档",
-    "search_scope": "doc"
-  }
-}
-```
 
 ## 安全配置
 
@@ -238,69 +206,6 @@ openssl rand -hex 32
 
 ```bash
 API_KEY=your_generated_api_key
-```
-
-**测试认证：**
-
-```bash
-# 无认证 - 应该返回 401
-curl http://localhost:8080/health
-
-# 有认证 - 应该返回 200
-curl -H "X-API-Key: your_api_key" http://localhost:8080/health
-```
-
-### DNS 重绑定保护
-
-服务器默认启用 DNS 重绑定保护，限制允许的主机名。
-
-**配置允许的主机名：**
-
-在代码中修改 `allowedHosts` 数组：
-
-```typescript
-const app = createMcpExpressApp({
-  host: '0.0.0.0',
-  allowedHosts: ['localhost', '127.0.0.1', '180.130.116.88']
-});
-```
-
-## MCP 客户端配置
-
-### Claude Desktop
-
-编辑配置文件 `~/Library/Application Support/Claude/claude_desktop_config.json`：
-
-```json
-{
-  "mcpServers": {
-    "feishu-mcp-remote": {
-      "command": "ssh",
-      "args": [
-        "root@180.130.116.88",
-        "docker exec -i feishu-mcp-plugin sh -c 'X_API_KEY=your_api_key node /app/dist/index-http.js'"
-      ]
-    }
-  }
-}
-```
-
-### Cursor
-
-编辑配置文件 `~/.cursor/mcp.json`：
-
-```json
-{
-  "mcpServers": {
-    "feishu-mcp": {
-      "command": "ssh",
-      "args": [
-        "root@180.130.116.88",
-        "docker exec -i feishu-mcp-plugin sh -c 'X_API_KEY=your_api_key node /app/dist/index-http.js'"
-      ]
-    }
-  }
-}
 ```
 
 ## 开发指南
@@ -336,42 +241,13 @@ npm run build
 npm start
 ```
 
-### 添加新工具
-
-1. 在 `src/index-http.ts` 中注册新工具：
-
-```typescript
-server.registerTool(
-  "new_tool_name",
-  {
-    title: "Tool Display Name",
-    description: "Tool description",
-    inputSchema: z.object({
-      param1: z.string(),
-      param2: z.string().optional(),
-    }),
-  },
-  async ({ param1, param2 }) => {
-    // 实现工具逻辑
-    return {
-      content: [{ type: "text" as const, text: "Result" }],
-    };
-  }
-);
-```
-
-2. 重新构建并部署。
-
 ## 故障排除
 
 ### 常见问题
 
-**1. 容器不断重启**
+**1. 服务器无法从公网访问**
 
-检查日志：
-```bash
-docker logs feishu-mcp-plugin
-```
+如果使用云服务器（如联通云），需要配置 NAT 网关将公网 IP 映射到内网 IP。
 
 **2. 认证失败**
 
@@ -393,10 +269,10 @@ docker logs -f feishu-mcp-plugin
 
 ## 部署信息
 
-- **服务器地址**: 180.130.116.88
+- **GitHub 仓库**: https://github.com/Venice851007/feishu-mcp-plugin
+- **服务器地址**: 180.130.116.88 (需配置 NAT 网关)
 - **端口**: 8080
 - **容器名称**: feishu-mcp-plugin
-- **镜像名称**: feishu-mcp-plugin
 
 ## 许可证
 
@@ -408,7 +284,7 @@ ISC
 
 ## 更新日志
 
-### v1.0.0 (2024-01-01)
+### v1.0.0 (2026-03-14)
 
 - 初始版本
 - 实现文档管理功能
@@ -416,4 +292,5 @@ ISC
 - 实现日历管理功能
 - 实现文档搜索功能
 - 添加 API 密钥认证
-- 添加 DNS 重绑定保护
+- Docker 部署支持
+- OpenCode 集成配置

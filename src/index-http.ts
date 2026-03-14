@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { FeishuAuth } from "./auth";
 import { z } from "zod";
 import express from "express";
@@ -149,28 +148,38 @@ const main = async () => {
   try {
     await auth.initialize();
     
-    // Create Express app with DNS rebinding protection
-    const app = createMcpExpressApp({ host: '0.0.0.0', allowedHosts: ['localhost', '127.0.0.1', '180.130.116.88'] });
+    // Create Express app
+    const app = express();
+    app.use(express.json());
     
     // Add authentication middleware
     app.use(authenticate);
     
     // Handle MCP requests
     app.post('/mcp', async (req: express.Request, res: express.Response) => {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined, // Stateless mode
-      });
-      
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-      
-      res.on('close', () => {
-        transport.close();
-      });
+      console.log('MCP request received');
+      try {
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined, // Stateless mode
+        });
+        
+        await server.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+        
+        res.on('close', () => {
+          transport.close();
+        });
+      } catch (error: any) {
+        console.error('MCP request error:', error.message);
+        if (!res.headersSent) {
+          res.status(500).json({ error: error.message });
+        }
+      }
     });
     
     // Health check endpoint
     app.get('/health', (req, res) => {
+      console.log('Health check requested');
       res.json({ status: 'ok', service: 'feishu-mcp-plugin' });
     });
     
